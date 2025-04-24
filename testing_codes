@@ -1,0 +1,441 @@
+-- 💥 MEGA MAGIC MASTER SCRIPT v3.2 💥
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local Debris       = game:GetService("Debris")
+local Players      = game:GetService("Players")
+
+local part = script.Parent
+
+-- Background Music
+local bgMusic = Instance.new("Sound", part)
+bgMusic.SoundId = "rbxassetid://1837635154"  -- your bg track
+bgMusic.Looped  = true
+bgMusic.Volume  = 0.5
+bgMusic:Play()
+
+-- SFX
+local startSound = Instance.new("Sound", part)
+startSound.SoundId = "rbxassetid://1837635154"
+startSound.Volume  = 1
+
+local countdownBeep = Instance.new("Sound", part)
+countdownBeep.SoundId = "rbxassetid://138079675"
+countdownBeep.Volume  = 1
+
+-- Sparkles on the trigger part
+Instance.new("Sparkles", part)
+
+-- Grow character
+local function growCharacter(char)
+	for i = 1, 10 do
+		for _, p in pairs(char:GetChildren()) do
+			if p:IsA("BasePart") then
+				p.Size = p.Size + Vector3.new(0.2, 0.2, 0.2)
+			end
+		end
+		wait(0.1)
+	end
+end
+
+-- Weather
+local function setWeather(type)
+	local lighting = game.Lighting
+	if type == "Clear" then
+		lighting.Brightness     = 2
+		lighting.FogEnd         = 100000
+		lighting.TimeOfDay      = "14:00:00"
+		lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+	elseif type == "Rain" then
+		lighting.Brightness = 1
+		lighting.FogEnd     = 100
+		lighting.TimeOfDay  = "16:00:00"
+	elseif type == "Storm" then
+		lighting.Brightness     = 0.5
+		lighting.FogEnd         = 80
+		lighting.TimeOfDay      = "00:00:00"
+		lighting.OutdoorAmbient = Color3.fromRGB(50,50,50)
+	end
+end
+
+-- Create GUI for player
+local function createGUI(player)
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name         = "MagicGUI"
+	gui.ResetOnSpawn = false
+
+	-- Magic Log
+	local commentBox = Instance.new("TextBox")
+	commentBox.Name             = "CommentBox"
+	commentBox.Size             = UDim2.new(0, 500, 0, 80)
+	commentBox.Position         = UDim2.new(0.5, -250, 0, 10)
+	commentBox.Text             = "✨ Magic Log ✨"
+	commentBox.TextWrapped      = true
+	commentBox.TextScaled       = true
+	commentBox.BackgroundColor3 = Color3.fromRGB(30, 30, 80)
+	commentBox.TextColor3       = Color3.new(1,1,1)
+	commentBox.ClearTextOnFocus = false
+	commentBox.Parent           = gui
+
+	-- Objective
+	local objectiveLabel = Instance.new("TextLabel")
+	objectiveLabel.Size             = UDim2.new(0, 300, 0, 40)
+	objectiveLabel.Position         = UDim2.new(0.5, -150, 0, 100)
+	objectiveLabel.Text             = "📝 Objective: Collect 3 Crystals"
+	objectiveLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+	objectiveLabel.BackgroundTransparency = 0.5
+	objectiveLabel.TextColor3       = Color3.new(1,1,1)
+	objectiveLabel.Font             = Enum.Font.Gotham
+	objectiveLabel.TextSize         = 18
+	objectiveLabel.Parent           = gui
+
+	local function setObjective(text)
+		objectiveLabel.Text = "📝 Objective: " .. text
+	end
+
+	-- Score
+	local score = 0
+	local scoreLabel = Instance.new("TextLabel")
+	scoreLabel.Size             = UDim2.new(0, 200, 0, 40)
+	scoreLabel.Position         = UDim2.new(1, -210, 0, 10)
+	scoreLabel.Text             = "✨ Score: 0"
+	scoreLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+	scoreLabel.BackgroundTransparency = 0.5
+	scoreLabel.TextColor3       = Color3.new(1,1,1)
+	scoreLabel.Font             = Enum.Font.GothamBold
+	scoreLabel.TextSize         = 18
+	scoreLabel.Parent           = gui
+
+	-- Spawn crystals
+	local function spawnCrystal()
+		local crystal = Instance.new("Part")
+		crystal.Shape      = Enum.PartType.Ball
+		crystal.Material   = Enum.Material.Neon
+		crystal.Color      = Color3.fromRGB(0,255,255)
+		crystal.Size       = Vector3.new(1,1,1)
+		crystal.Anchored   = false
+		crystal.CanCollide = false
+		crystal.Position   = part.Position + Vector3.new(math.random(-10,10),5,math.random(-10,10))
+		crystal.Parent     = workspace
+
+		local ps = Instance.new("ParticleEmitter", crystal)
+		ps.Texture  = "rbxassetid://284205403"
+		ps.Rate     = 50
+		ps.Lifetime = NumberRange.new(1)
+
+		Debris:AddItem(crystal, 30)
+
+		crystal.Touched:Connect(function(hit)
+			local p = Players:GetPlayerFromCharacter(hit.Parent)
+			if p == player then
+				score += 1
+				scoreLabel.Text = "✨ Score: "..score
+				crystal:Destroy()
+				if score >= 3 then
+					setObjective("Cast the Explode Spell!")
+				end
+			end
+		end)
+	end
+
+	for i = 1, 3 do
+		spawnCrystal()
+		wait(5)
+	end
+
+	-- Button helper
+	local function createButton(name, text, pos)
+		local btn = Instance.new("TextButton")
+		btn.Name             = name
+		btn.Text             = text
+		btn.Size             = UDim2.new(0, 120, 0, 40)
+		btn.Position         = pos
+		btn.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+		btn.Font             = Enum.Font.GothamBold
+		btn.TextSize         = 18
+		btn.TextColor3       = Color3.new(1,1,1)
+		btn.Parent           = gui
+
+		btn.MouseEnter:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.2), {
+				BackgroundColor3 = Color3.fromRGB(150,50,200)
+			}):Play()
+		end)
+		btn.MouseLeave:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.2), {
+				BackgroundColor3 = Color3.fromRGB(100,0,150)
+			}):Play()
+		end)
+
+		return btn
+	end
+
+	-- All magic actions
+	local magicActions = {
+		{"Fire",     function()
+			local f = Instance.new("Fire", player.Character.HumanoidRootPart)
+			f.Size=10; f.Heat=25; wait(5); f:Destroy()
+		end},
+		{"Dance",    function()
+			local h = player.Character:FindFirstChildOfClass("Humanoid")
+			local a = Instance.new("Animation")
+			a.AnimationId = "rbxassetid://507771019"
+			h:LoadAnimation(a):Play()
+		end},
+		{"Fly",      function()
+			local bv = Instance.new("BodyVelocity", player.Character.HumanoidRootPart)
+			bv.Velocity = Vector3.new(0,100,0)
+			bv.MaxForce = Vector3.new(0,math.huge,0)
+			wait(2); bv:Destroy()
+		end},
+		{"Spin",     function()
+			local hrp = player.Character.HumanoidRootPart
+			for i=1,30 do
+				hrp.CFrame = hrp.CFrame * CFrame.Angles(0,math.rad(30),0)
+				wait(0.05)
+			end
+		end},
+		{"IceArmor", function()
+			local e = Instance.new("ParticleEmitter", player.Character.HumanoidRootPart)
+			e.Texture   = "rbxassetid://284205403"
+			e.Rate      = 100
+			e.Lifetime  = NumberRange.new(1)
+			e.Speed     = NumberRange.new(1)
+			e.Color     = ColorSequence.new(Color3.fromRGB(0,255,255))
+			wait(5); e.Enabled=false
+		end},
+		{"Orb",      function()
+			local orb = Instance.new("Part")
+			orb.Shape     = Enum.PartType.Ball
+			orb.Material  = Enum.Material.Neon
+			orb.Color     = Color3.fromRGB(255,0,255)
+			orb.Size      = Vector3.new(4,4,4)
+			orb.Anchored  = false
+			orb.CanCollide= false
+			orb.Position  = player.Character.HumanoidRootPart.Position + Vector3.new(0,5,0)
+			orb.Parent    = workspace
+			Instance.new("Fire",orb).Size=5
+			local bv = Instance.new("BodyVelocity",orb)
+			bv.Velocity   = Vector3.new(0,30,0)
+			bv.MaxForce   = Vector3.new(math.huge,math.huge,math.huge)
+			Debris:AddItem(orb,5)
+		end},
+		{"Explode",  function()
+			local pos = player.Character.HumanoidRootPart.Position
+			local ex  = Instance.new("Explosion")
+			ex.Position    = pos
+			ex.BlastRadius = 10
+			ex.Parent      = workspace
+			local cam = workspace.CurrentCamera
+			for i=1,20 do
+				cam.CFrame = cam.CFrame *
+					CFrame.new(math.random(-1,1),math.random(-1,1),math.random(-1,1)) *
+					CFrame.Angles(math.rad(math.random(-1,1)),
+						math.rad(math.random(-1,1)),0)
+				wait(0.03)
+			end
+		end},
+		{"Rain",     function() setWeather("Rain")  end},
+		{"Thunder",  function() setWeather("Storm") end},
+		{"Clear",    function() setWeather("Clear") end},
+		-- Bomb rain
+		{"Bomb", function()
+			for i=1,5 do
+				local bomb = Instance.new("Part")
+				bomb.Shape      = Enum.PartType.Ball
+				bomb.Material   = Enum.Material.Metal
+				bomb.Color      = Color3.new(0.1,0.1,0.1)
+				bomb.Size       = Vector3.new(2,2,2)
+				bomb.Anchored   = false
+				bomb.CanCollide = true
+				bomb.Position   = player.Character.HumanoidRootPart.Position
+					+ Vector3.new(math.random(-20,20),50,math.random(-20,20))
+				bomb.Parent     = workspace
+
+				local bv = Instance.new("BodyVelocity", bomb)
+				bv.Velocity = Vector3.new(0,-100,0)
+				bv.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+				Debris:AddItem(bomb,10)
+
+				bomb.Touched:Once(function()
+					local e = Instance.new("Explosion")
+					e.Position    = bomb.Position
+					e.BlastRadius = 15
+					e.Parent      = workspace
+					bomb:Destroy()
+				end)
+
+				wait(0.5)
+			end
+		end},
+		-- Monster pop-in
+		{"Monster", function()
+			local mdl = Instance.new("Model", workspace)
+			mdl.Name = "SummonedMonster"
+			local bp = Instance.new("Part") -- body
+			bp.Name       = "Body"
+			bp.Size       = Vector3.new(4,6,2)
+			bp.Position   = player.Character.HumanoidRootPart.Position
+				+ player.Character.HumanoidRootPart.CFrame.LookVector*10
+				+ Vector3.new(0,3,0)
+			bp.BrickColor = BrickColor.new("Bright green")
+			bp.Anchored   = true
+			bp.Parent     = mdl
+
+			local hp = Instance.new("Part") -- head
+			hp.Name       = "Head"
+			hp.Shape      = Enum.PartType.Ball
+			hp.Size       = Vector3.new(2,2,2)
+			hp.Position   = bp.Position + Vector3.new(0,4,0)
+			hp.BrickColor = BrickColor.new("Bright red")
+			hp.Anchored   = true
+			hp.Parent     = mdl
+
+			Debris:AddItem(mdl,15)
+		end},
+		-- House spawn
+		{"House", function()
+			local base = Instance.new("Part")
+			base.Name       = "HouseBase"
+			base.Size       = Vector3.new(10,1,10)
+			base.Position   = player.Character.HumanoidRootPart.Position
+				+ player.Character.HumanoidRootPart.CFrame.LookVector*8
+				+ Vector3.new(0,0.5,0)
+			base.BrickColor = BrickColor.new("Reddish brown")
+			base.Anchored   = true
+			base.Parent     = workspace
+
+			local roof = Instance.new("WedgePart")
+			roof.Size       = Vector3.new(10,5,10)
+			roof.Position   = base.Position + Vector3.new(0,3,0)
+			roof.BrickColor = BrickColor.new("Dark stone grey")
+			roof.Anchored   = true
+			roof.Parent     = workspace
+
+			Debris:AddItem(base,30)
+			Debris:AddItem(roof,30)
+		end},
+		-- Car spawn
+		{"Car", function()
+			local car = Instance.new("Model", workspace)
+			car.Name = "MagicCar"
+			local body = Instance.new("Part")
+			body.Name       = "Body"
+			body.Size       = Vector3.new(6,1,3)
+			body.Position   = player.Character.HumanoidRootPart.Position
+				+ player.Character.HumanoidRootPart.CFrame.LookVector*12
+				+ Vector3.new(0,1,0)
+			body.BrickColor = BrickColor.new("Bright yellow")
+			body.Anchored   = true
+			body.Parent     = car
+
+			for _, offset in ipairs({Vector3.new(2.5, -0.5, 1.2), Vector3.new(-2.5,-0.5,1.2),
+				Vector3.new(2.5,-0.5,-1.2), Vector3.new(-2.5,-0.5,-1.2)}) do
+				local wheel = Instance.new("Part")
+				wheel.Shape      = Enum.PartType.Cylinder
+				wheel.Size       = Vector3.new(1,1,1)
+				wheel.CFrame     = body.CFrame * CFrame.new(offset) *
+					CFrame.Angles(0,0,math.rad(90))
+				wheel.BrickColor = BrickColor.new("Really black")
+				wheel.Anchored   = true
+				wheel.Parent     = car
+			end
+
+			Debris:AddItem(car,30)
+		end},
+		-- Tree spawn
+		{"Tree", function()
+			local trunk = Instance.new("Part")
+			trunk.Size       = Vector3.new(1,6,1)
+			trunk.Position   = player.Character.HumanoidRootPart.Position
+				+ player.Character.HumanoidRootPart.CFrame.LookVector*6
+				+ Vector3.new(0,3,0)
+			trunk.BrickColor = BrickColor.new("Reddish brown")
+			trunk.Anchored   = true
+			trunk.Parent     = workspace
+
+			local leaves = Instance.new("Part")
+			leaves.Shape      = Enum.PartType.Ball
+			leaves.Size       = Vector3.new(5,5,5)
+			leaves.Position   = trunk.Position + Vector3.new(0,3.5,0)
+			leaves.BrickColor = BrickColor.new("Bright green")
+			leaves.Anchored   = true
+			leaves.Parent     = workspace
+
+			Debris:AddItem(trunk,30)
+			Debris:AddItem(leaves,30)
+		end},
+	}
+
+	-- Layout 2×6 buttons at bottom
+	local cols, rows = 6, 2
+	local btnW, btnH  = 120, 40
+	-- wait for AbsoluteSize
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Wait()
+	local totalW  = cols*btnW + (cols-1)*10
+	local startX  = (gui.AbsoluteSize.X - totalW)/2
+	for i, act in ipairs(magicActions) do
+		local row = math.floor((i-1)/cols)
+		local col = (i-1)%cols
+		local x = startX + col*(btnW+10)
+		local y = gui.AbsoluteSize.Y - ((rows-row)*(btnH+10)) - 20
+		local btn = createButton("Btn"..i, "💫 "..act[1],
+			UDim2.new(0, x, 0, y))
+		btn.MouseButton1Click:Connect(function()
+			commentBox.Text = "✅ Activated: "..act[1]
+			act[2]()
+		end)
+	end
+end
+
+-- Main trigger
+part.Touched:Connect(function(hit)
+	local player = Players:GetPlayerFromCharacter(hit.Parent)
+	if not player then return end
+	if part:GetAttribute("Triggered") then return end
+	part:SetAttribute("Triggered", true)
+
+	local char = player.Character or player.CharacterAdded:Wait()
+
+	-- Intro countdown
+	local hint = Instance.new("Hint", player:WaitForChild("PlayerGui"))
+	hint.Text = "🎉 Yayy! Game has started!"
+	startSound:Play()
+	wait(2)
+	for i=5,1,-1 do
+		hint.Text = "⏳ Game starts in: "..i
+		countdownBeep:Play()
+		wait(1)
+	end
+	hint:Destroy()
+
+	-- Grow + sparkle
+	growCharacter(char)
+	local burst = Instance.new("ParticleEmitter")
+	burst.Texture  = "rbxassetid://284205403"
+	burst.Lifetime = NumberRange.new(1)
+	burst.Rate     = 300
+	burst.Speed    = NumberRange.new(10)
+	burst.Parent   = char.HumanoidRootPart
+	wait(1.5)
+	burst.Enabled = false
+
+	-- Quick blur effect
+	local cc   = Instance.new("ColorCorrectionEffect", game.Lighting)
+	cc.Saturation = 0
+	local blur = Instance.new("BlurEffect", game.Lighting)
+	blur.Size     = 10
+	delay(3, function()
+		TweenService:Create(cc, TweenInfo.new(2), {Saturation=1}):Play()
+		TweenService:Create(blur, TweenInfo.new(2), {Size=0}):Play()
+		Debris:AddItem(cc, 2)
+		Debris:AddItem(blur, 2)
+	end)
+
+	-- Show the GUI
+	createGUI(player)
+
+	-- Reset trigger
+	wait(10)
+	part:SetAttribute("Triggered", false)
+end)
