@@ -1,0 +1,46 @@
+
+local playButton = script.Parent
+local debounce = false -- Prevent multiple triggers
+
+-- Function to create snow
+local function createSnow()
+    for i = 1, 50 do
+        local snowflake = Instance.new("Part")
+        snowflake.Size = Vector3.new(0.5, 0.5, 0.5)
+        snowflake.Shape = Enum.PartType.Ball
+        snowflake.Material = Enum.Material.SmoothPlastic
+        snowflake.BrickColor = BrickColor.new("White")
+        snowflake.Anchored = false
+        snowflake.CanCollide = false
+        snowflake.Position = Vector3.new(
+            math.random(-50, 50), -- X position
+            math.random(30, 60), -- Height (Y position)
+            math.random(-50, 50) -- Z position
+        )
+        snowflake.Parent = game.Workspace
+
+        -- Add gravity effect
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0, -10, 0) -- Makes it fall down
+        bodyVelocity.MaxForce = Vector3.new(0, math.huge, 0)
+        bodyVelocity.Parent = snowflake
+
+        -- Remove snowflake after some time
+        game.Debris:AddItem(snowflake, 5)
+    end
+end
+
+-- Function to trigger snow
+local function onButtonClick()
+    if debounce then return end
+    debounce = true
+    createSnow()
+    wait(1) -- Cooldown before re-triggering
+    debounce = false
+end
+
+-- Connect function to button click
+playButton.Touched:Connect(onButtonClick)
+
+
+
