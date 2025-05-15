@@ -1,0 +1,310 @@
+local TriggerPart = script.Parent
+
+local function onTouch(otherPart)
+	local character = otherPart.Parent
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local player = game.Players:GetPlayerFromCharacter(character)
+		if player and not player:FindFirstChild("MagicGui") then
+			local playerGui = player:WaitForChild("PlayerGui")
+
+			local screenGui = Instance.new("ScreenGui")
+			screenGui.Name = "MagicGui"
+			screenGui.ResetOnSpawn = false
+			screenGui.Parent = playerGui
+
+			local function createButton(text, position, callback)
+				local button = Instance.new("TextButton")
+				button.Size = UDim2.new(0, 200, 0, 50)
+				button.Position = position
+				button.BackgroundColor3 = Color3.fromRGB(math.random(50,255), math.random(50,255), math.random(50,255))
+				button.TextColor3 = Color3.new(1, 1, 1)
+				button.Font = Enum.Font.GothamBold
+				button.TextSize = 18
+				button.Text = text
+				button.Parent = screenGui
+				button.MouseButton1Click:Connect(callback)
+			end
+
+			local posY = 100
+			local spacing = 60
+
+			-- LEFT SIDE BUTTONS
+			local function L(y)
+				return UDim2.new(0, 20, 0, y)
+			end
+
+			createButton("Change Outfit", L(posY), function()
+				for _, v in ipairs(character:GetChildren()) do
+					if v:IsA("Shirt") or v:IsA("Pants") then v:Destroy() end
+				end
+				local shirt = Instance.new("Shirt", character)
+				local pants = Instance.new("Pants", character)
+				shirt.ShirtTemplate = "rbxassetid://14407675952"
+				pants.PantsTemplate = "rbxassetid://14407676869"
+			end)
+			posY += spacing
+
+			createButton("Build Wall", L(posY), function()
+				for i = 1, 5 do
+					local wall = Instance.new("Part")
+					wall.Size = Vector3.new(4, 8, 1)
+					wall.Position = character.HumanoidRootPart.Position + Vector3.new(i * 5, 4, 0)
+					wall.Anchored = true
+					wall.BrickColor = BrickColor.Random()
+					wall.Parent = workspace
+				end
+			end)
+			posY += spacing
+
+			createButton("Launch Bomb", L(posY), function()
+				local bomb = Instance.new("Part")
+				bomb.Size = Vector3.new(2, 2, 2)
+				bomb.Position = character.HumanoidRootPart.Position + Vector3.new(0, 5, 0)
+				bomb.Shape = Enum.PartType.Ball
+				bomb.BrickColor = BrickColor.new("Really red")
+				bomb.Anchored = false
+				bomb.Parent = workspace
+				bomb.Velocity = character.HumanoidRootPart.CFrame.lookVector * 70
+				bomb.Touched:Connect(function()
+					local explosion = Instance.new("Explosion")
+					explosion.Position = bomb.Position
+					explosion.BlastRadius = 15
+					explosion.BlastPressure = 999999
+					explosion.Parent = workspace
+					bomb:Destroy()
+				end)
+			end)
+			posY += spacing
+
+			createButton("Speed Boost", L(posY), function()
+				local h = character:FindFirstChildOfClass("Humanoid")
+				if h then
+					h.WalkSpeed = 150
+					wait(5)
+					h.WalkSpeed = 16
+				end
+			end)
+			posY += spacing
+
+			createButton("Explode Everyone", L(posY), function()
+				for _, p in ipairs(game.Players:GetPlayers()) do
+					if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+						local boom = Instance.new("Explosion")
+						boom.Position = p.Character.HumanoidRootPart.Position
+						boom.BlastRadius = 10
+						boom.BlastPressure = 800000
+						boom.Parent = workspace
+					end
+				end
+			end)
+			posY += spacing
+
+			createButton("Fly Mode (Toggle)", L(posY), function()
+				local bp = character:FindFirstChild("BodyVelocity")
+				if bp then
+					bp:Destroy()
+				else
+					local fly = Instance.new("BodyVelocity")
+					fly.Velocity = Vector3.new(0, 100, 0)
+					fly.MaxForce = Vector3.new(0, math.huge, 0)
+					fly.Parent = character:FindFirstChild("HumanoidRootPart")
+				end
+			end)
+			posY += spacing
+
+			createButton("Spin Crazy", L(posY), function()
+				while true do
+					if character and character:FindFirstChild("HumanoidRootPart") then
+						character.HumanoidRootPart.CFrame *= CFrame.Angles(0, math.rad(45), 0)
+					end
+					wait(0.1)
+				end
+			end)
+			posY += spacing
+
+			createButton("Fake Ban Alert", L(posY), function()
+				local label = Instance.new("TextLabel")
+				label.Size = UDim2.new(1, 0, 0, 100)
+				label.Position = UDim2.new(0, 0, 0, 0)
+				label.BackgroundColor3 = Color3.new(1, 0, 0)
+				label.TextColor3 = Color3.new(1, 1, 1)
+				label.Font = Enum.Font.ArialBold
+				label.TextSize = 40
+				label.Text = "⚠️ You have been BANNED! JK! 😂"
+				label.Parent = screenGui
+				wait(4)
+				label:Destroy()
+			end)
+			posY += spacing
+
+			createButton("Clone Me", L(posY), function()
+				local clone = character:Clone()
+				clone:MoveTo(character.HumanoidRootPart.Position + Vector3.new(5, 0, 0))
+				clone.Parent = workspace
+			end)
+			posY += spacing
+
+			createButton("Confetti Rain", L(posY), function()
+				for i = 1, 100 do
+					local p = Instance.new("Part")
+					p.Size = Vector3.new(0.5, 0.5, 0.5)
+					p.Position = Vector3.new(math.random(-100,100), 50, math.random(-100,100))
+					p.Anchored = false
+					p.BrickColor = BrickColor.Random()
+					p.Parent = workspace
+					game:GetService("Debris"):AddItem(p, 10)
+				end
+			end)
+			posY += spacing
+
+			createButton("Spawn Dancing NPC", L(posY), function()
+				local npc = game.Players:CreateHumanoidModelFromUserId(1)
+				npc:SetPrimaryPartCFrame(character.PrimaryPart.CFrame + Vector3.new(5,0,0))
+				npc.Parent = workspace
+			end)
+			posY += spacing
+
+			-- RIGHT SIDE BUTTONS
+			local posYRight = 100
+			local function R(y)
+				return UDim2.new(1, -220, 0, y)
+			end
+
+			createButton("Turn into Noob", R(posYRight), function()
+				for _, v in ipairs(character:GetChildren()) do
+					if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") then v:Destroy() end
+				end
+				local shirt = Instance.new("Shirt", character)
+				local pants = Instance.new("Pants", character)
+				shirt.ShirtTemplate = "rbxassetid://14407669966"
+				pants.PantsTemplate = "rbxassetid://14407670229"
+			end)
+			posYRight += spacing
+
+			createButton("Laser Gun", R(posYRight), function()
+				local laser = Instance.new("Part")
+				laser.Size = Vector3.new(1, 1, 1)
+				laser.Shape = Enum.PartType.Cylinder
+				laser.Anchored = false
+				laser.BrickColor = BrickColor.new("Really red")
+				laser.CFrame = character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+				laser.Velocity = character.HumanoidRootPart.CFrame.lookVector * 200
+				laser.Parent = workspace
+				laser.Touched:Connect(function(hit)
+					if hit.Parent:FindFirstChild("Humanoid") then
+						hit.Parent.Humanoid.Health = 0
+					end
+					laser:Destroy()
+				end)
+			end)
+			posYRight += spacing
+
+			createButton("Make Everyone Dance", R(posYRight), function()
+				for _, p in ipairs(game.Players:GetPlayers()) do
+					local h = p.Character and p.Character:FindFirstChild("Humanoid")
+					if h then
+						h:LoadAnimation(Instance.new("Animation", h)).AnimationId = "rbxassetid://507770239"
+					end
+				end
+			end)
+			posYRight += spacing
+
+			createButton("Flashbang", R(posYRight), function()
+				local flash = Instance.new("Part")
+				flash.Anchored = true
+				flash.Size = Vector3.new(1000, 1000, 1)
+				flash.CFrame = character.HumanoidRootPart.CFrame
+				flash.BrickColor = BrickColor.White()
+				flash.Transparency = 0
+				flash.Parent = workspace
+				wait(0.3)
+				flash:Destroy()
+			end)
+			posYRight += spacing
+
+			createButton("Shrink Everyone", R(posYRight), function()
+				for _, p in ipairs(game.Players:GetPlayers()) do
+					if p.Character then
+						p.Character:SetPrimaryPartCFrame(p.Character.PrimaryPart.CFrame)
+						for _, part in pairs(p.Character:GetDescendants()) do
+							if part:IsA("BasePart") then
+								part.Size = part.Size * 0.3
+							end
+						end
+					end
+				end
+				-- 6: Build Structure
+createButton("Build Structure", R(posYRight), function()
+    for i = 1, 5 do
+        local part = Instance.new("Part")
+        part.Size = Vector3.new(4, 1, 4)
+        part.Position = character.HumanoidRootPart.Position + Vector3.new(0, i, 0)
+        part.Anchored = true
+        part.BrickColor = BrickColor.Random()
+        part.Parent = workspace
+    end
+end)
+posYRight += spacing
+
+-- 7: Show Banner
+createButton("Show Banner", R(posYRight), function()
+    local banner = Instance.new("TextLabel")
+    banner.Size = UDim2.new(1, 0, 0, 100)
+    banner.Position = UDim2.new(0, 0, 0, 0)
+    banner.BackgroundColor3 = Color3.new(0, 0, 0)
+    banner.TextColor3 = Color3.new(1, 1, 1)
+    banner.Font = Enum.Font.SourceSansBold
+    banner.TextSize = 36
+    banner.Text = "Welcome to the Fun Zone!"
+    banner.Parent = screenGui
+    wait(3)
+    banner:Destroy()
+end)
+posYRight += spacing
+
+-- 8: Play Dance Animation
+createButton("Dance Animation", R(posYRight), function()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local animation = Instance.new("Animation")
+        animation.AnimationId = "rbxassetid://507771019" -- Replace with your animation ID
+        local animTrack = humanoid:LoadAnimation(animation)
+        animTrack:Play()
+    end
+end)
+posYRight += spacing
+
+-- 9: Spawn Staircase
+createButton("Spawn Staircase", R(posYRight), function()
+    for i = 1, 10 do
+        local step = Instance.new("Part")
+        step.Size = Vector3.new(4, 1, 4)
+        step.Position = character.HumanoidRootPart.Position + Vector3.new(0, i, i * 4)
+        step.Anchored = true
+        step.BrickColor = BrickColor.Random()
+        step.Parent = workspace
+    end
+end)
+posYRight += spacing
+
+-- 10: Activate Shield
+createButton("Activate Shield", R(posYRight), function()
+    local shield = Instance.new("Part")
+    shield.Shape = Enum.PartType.Ball
+    shield.Size = Vector3.new(10, 10, 10)
+    shield.Position = character.HumanoidRootPart.Position
+    shield.Anchored = true
+    shield.Transparency = 0.5
+    shield.BrickColor = BrickColor.new("Bright blue")
+    shield.Parent = workspace
+    game:GetService("Debris"):AddItem(shield, 5)
+end)
+posYRight += spacing
+
+			end)
+		end
+	end
+end
+
+TriggerPart.Touched:Connect(onTouch)
