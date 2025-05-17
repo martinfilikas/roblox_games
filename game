@@ -1,0 +1,161 @@
+local trigger = script.Parent
+
+local function onTouch(part)
+	local character = part.Parent
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	local player = game.Players:GetPlayerFromCharacter(character)
+	if not player then return end
+	if player:FindFirstChild("FunGui") then return end
+
+	local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+	gui.Name = "FunGui"
+
+	local msg = Instance.new("TextLabel", gui)
+	msg.Size = UDim2.new(1,0,0,60)
+	msg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+	msg.TextColor3 = Color3.new(1,1,0)
+	msg.Font = Enum.Font.Cartoon
+	msg.TextSize = 30
+	msg.Text = "🚀 Welcome, Adventurer! Press the buttons below!"
+	
+	local function makeButton(text, y, callback)
+		local btn = Instance.new("TextButton", gui)
+		btn.Size = UDim2.new(0, 280, 0, 50)
+		btn.Position = UDim2.new(0, 20, 0, y)
+		btn.BackgroundColor3 = Color3.fromRGB(math.random(100,255), math.random(100,255), math.random(100,255))
+		btn.TextColor3 = Color3.new(1,1,1)
+		btn.Font = Enum.Font.Bangers
+		btn.TextSize = 22
+		btn.Text = text
+		btn.MouseButton1Click:Connect(callback)
+	end
+
+	local yOffset = 80
+
+	makeButton("☁️ Magic Cloud Feet", yOffset, function()
+		msg.Text = "☁️ Look! Your feet make clouds!"
+		local cloud = Instance.new("ParticleEmitter", character.HumanoidRootPart)
+		cloud.Texture = "rbxassetid://243660364"
+		cloud.Lifetime = NumberRange.new(1)
+		cloud.Rate = 100
+		cloud.Speed = NumberRange.new(0)
+	end)
+	yOffset += 60
+
+	makeButton("🛸 Spawn Super Trampoline", yOffset, function()
+		msg.Text = "🛸 Jump on it to fly high!"
+		local tramp = Instance.new("Part", workspace)
+		tramp.Size = Vector3.new(20, 1, 20)
+		tramp.Position = character.HumanoidRootPart.Position + Vector3.new(0, -3, 10)
+		tramp.Anchored = true
+		tramp.BrickColor = BrickColor.new("Lime green")
+		tramp.Touched:Connect(function(p)
+			local h = p.Parent and p.Parent:FindFirstChildOfClass("Humanoid")
+			if h then
+				p.Velocity = Vector3.new(0, 150, 0)
+			end
+		end)
+	end)
+	yOffset += 60
+
+	makeButton("🏰 Build Secret Base", yOffset, function()
+		msg.Text = "🏰 Building secret base..."
+		local root = character.HumanoidRootPart.Position
+		for i = 1, 4 do
+			local wall = Instance.new("Part", workspace)
+			wall.Size = Vector3.new(10, 10, 1)
+			wall.Position = root + Vector3.new(math.cos(math.rad(i*90))*5, 5, math.sin(math.rad(i*90))*5)
+			wall.Anchored = true
+			wall.BrickColor = BrickColor.Random()
+		end
+		local roof = Instance.new("Part", workspace)
+		roof.Size = Vector3.new(10,1,10)
+		roof.Position = root + Vector3.new(0,10,0)
+		roof.Anchored = true
+		roof.BrickColor = BrickColor.new("Dark stone grey")
+	end)
+	yOffset += 60
+
+	makeButton("🏎️ Spawn Race Track + Car", yOffset, function()
+		msg.Text = "🏎️ Zoom! Drive your car!"
+		local start = character.HumanoidRootPart.Position + Vector3.new(0,0,-20)
+		for i = 1, 20 do
+			local road = Instance.new("Part", workspace)
+			road.Size = Vector3.new(10,1,10)
+			road.Position = start + Vector3.new(0,0,i*10)
+			road.Anchored = true
+			road.BrickColor = BrickColor.new("Black")
+		end
+		local car = game:GetService("InsertService"):LoadAsset(16688968):GetChildren()[1]
+		car.Parent = workspace
+		car:MoveTo(character.HumanoidRootPart.Position + Vector3.new(0, 5, -10))
+	end)
+	yOffset += 60
+
+	makeButton("🐉 Ride Pet Dragon", yOffset, function()
+		msg.Text = "🐉 You now ride a pet dragon!"
+		local dragon = Instance.new("Model", workspace)
+		local body = Instance.new("Part", dragon)
+		body.Size = Vector3.new(8,2,16)
+		body.Position = character.HumanoidRootPart.Position + Vector3.new(0,5,0)
+		body.Anchored = false
+		body.BrickColor = BrickColor.new("Bright red")
+		local seat = Instance.new("VehicleSeat", dragon)
+		seat.Size = Vector3.new(2,1,2)
+		seat.Position = body.Position + Vector3.new(0,1.5,0)
+		seat.Anchored = false
+		local weld = Instance.new("WeldConstraint", body)
+		weld.Part0 = body
+		weld.Part1 = seat
+	end)
+	yOffset += 60
+
+	makeButton("🌈 Paint the Sky", yOffset, function()
+		msg.Text = "🌈 Look up! Sky is rainbow now!"
+		local lighting = game:GetService("Lighting")
+		lighting.Ambient = Color3.fromRGB(255, 100, 255)
+		lighting.OutdoorAmbient = Color3.fromRGB(0, 255, 255)
+		lighting.Sky.SkyboxBk = "rbxassetid://271042516"
+		lighting.Sky.SkyboxDn = "rbxassetid://271042556"
+		lighting.Sky.SkyboxFt = "rbxassetid://271042556"
+		lighting.Sky.SkyboxLf = "rbxassetid://271042516"
+		lighting.Sky.SkyboxRt = "rbxassetid://271042516"
+		lighting.Sky.SkyboxUp = "rbxassetid://271077243"
+	end)
+	yOffset += 60
+
+	makeButton("🎶 Disco Party", yOffset, function()
+		msg.Text = "💃 Let the disco begin!"
+		local discoBall = Instance.new("Part", workspace)
+		discoBall.Size = Vector3.new(2,2,2)
+		discoBall.Position = character.HumanoidRootPart.Position + Vector3.new(0, 10, 0)
+		discoBall.Anchored = true
+		discoBall.Material = Enum.Material.Neon
+		discoBall.BrickColor = BrickColor.new("Hot pink")
+
+		for i = 1, 20 do
+			local light = Instance.new("PointLight", discoBall)
+			light.Color = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
+			wait(0.1)
+		end
+
+		local music = Instance.new("Sound", workspace)
+		music.SoundId = "rbxassetid://142376088" -- Party music
+		music.Volume = 1
+		music:Play()
+	end)
+	yOffset += 60
+
+	makeButton("🎆 Final Surprise!", yOffset, function()
+		msg.Text = "🎆 You are AWESOME!!!"
+		for i = 1, 30 do
+			local boom = Instance.new("Explosion", workspace)
+			boom.Position = character.HumanoidRootPart.Position + Vector3.new(math.random(-30,30), math.random(5,30), math.random(-30,30))
+			wait(0.1)
+		end
+	end)
+end
+
+trigger.Touched:Connect(onTouch)
