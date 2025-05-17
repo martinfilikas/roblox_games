@@ -1,0 +1,200 @@
+local TriggerPart = script.Parent
+
+local function onTouch(part)
+	local character = part.Parent
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	local player = game.Players:GetPlayerFromCharacter(character)
+	if not player then return end
+	if player:FindFirstChild("PlaygroundGui") then return end
+
+	local playerGui = player:WaitForChild("PlayerGui")
+
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "PlaygroundGui"
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = playerGui
+
+	local message = Instance.new("TextLabel")
+	message.Size = UDim2.new(1, 0, 0, 50)
+	message.BackgroundColor3 = Color3.new(0, 0.5, 1)
+	message.TextColor3 = Color3.new(1,1,1)
+	message.Font = Enum.Font.FredokaOne
+	message.TextSize = 30
+	message.Text = "🌟 Welcome to the Magic Playground 🌟"
+	message.Parent = screenGui
+
+	local y = 60
+	local spacing = 60
+
+	local function createButton(text, callback)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 250, 0, 50)
+		btn.Position = UDim2.new(0, 20, 0, y)
+		btn.BackgroundColor3 = Color3.fromRGB(math.random(100,255), math.random(100,255), math.random(100,255))
+		btn.TextColor3 = Color3.new(1,1,1)
+		btn.Font = Enum.Font.Cartoon
+		btn.TextSize = 20
+		btn.Text = text
+		btn.Parent = screenGui
+		btn.MouseButton1Click:Connect(callback)
+		y = y + spacing
+	end
+
+	-- 🍭 Candy Launcher
+	createButton("🍭 Candy Launcher", function()
+		for i = 1, 10 do
+			local candy = Instance.new("Part")
+			candy.Size = Vector3.new(1,1,1)
+			candy.Shape = Enum.PartType.Ball
+			candy.BrickColor = BrickColor.Random()
+			candy.Position = character.HumanoidRootPart.Position + Vector3.new(0,3,0)
+			candy.Velocity = Vector3.new(math.random(-30,30), math.random(10,50), math.random(-30,30))
+			candy.Parent = workspace
+			game:GetService("Debris"):AddItem(candy, 5)
+		end
+		message.Text = "🍬 So many candies! Yummy!"
+	end)
+
+	-- 🏰 Build Castle
+	createButton("🏰 Build Castle", function()
+		for i = 1, 5 do
+			local wall = Instance.new("Part")
+			wall.Size = Vector3.new(6, 10, 1)
+			wall.Position = character.HumanoidRootPart.Position + Vector3.new(i * 6, 5, 0)
+			wall.Anchored = true
+			wall.BrickColor = BrickColor.Gray()
+			wall.Parent = workspace
+		end
+		message.Text = "🏰 Wow! You built a mini castle!"
+	end)
+
+	-- 🚀 Rocket Ride
+	createButton("🚀 Rocket Ride", function()
+		local rocket = Instance.new("Part")
+		rocket.Size = Vector3.new(2, 5, 2)
+		rocket.Position = character.HumanoidRootPart.Position + Vector3.new(0, 3, 0)
+		rocket.Anchored = false
+		rocket.BrickColor = BrickColor.new("Bright red")
+		rocket.Parent = workspace
+
+		character:MoveTo(rocket.Position + Vector3.new(0,2,0))
+		rocket.Velocity = Vector3.new(0,100,0)
+
+		game:GetService("Debris"):AddItem(rocket, 5)
+		message.Text = "🚀 Woooosh! Off you go!"
+	end)
+
+	-- 🌈 Rainbow Trail
+	createButton("🌈 Rainbow Trail", function()
+		local trail = Instance.new("Trail")
+		trail.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.new(1,0,0)),
+			ColorSequenceKeypoint.new(0.2, Color3.new(1,0.5,0)),
+			ColorSequenceKeypoint.new(0.4, Color3.new(1,1,0)),
+			ColorSequenceKeypoint.new(0.6, Color3.new(0,1,0)),
+			ColorSequenceKeypoint.new(0.8, Color3.new(0,0,1)),
+			ColorSequenceKeypoint.new(1, Color3.new(0.5,0,1)),
+		}
+		trail.Attachment0 = Instance.new("Attachment", character.HumanoidRootPart)
+		trail.Attachment1 = Instance.new("Attachment", character.HumanoidRootPart)
+		trail.Parent = character.HumanoidRootPart
+		message.Text = "🌈 Magical rainbow trail active!"
+	end)
+
+	-- 💎 Spawn Pet
+	createButton("💎 Spawn Pet", function()
+		local pet = Instance.new("Part")
+		pet.Size = Vector3.new(2,2,2)
+		pet.Position = character.HumanoidRootPart.Position + Vector3.new(3,0,3)
+		pet.BrickColor = BrickColor.new("Bright violet")
+		pet.Shape = Enum.PartType.Ball
+		pet.Anchored = false
+		pet.Name = "Pet"
+		pet.Parent = workspace
+
+		local b = Instance.new("BodyPosition", pet)
+		b.MaxForce = Vector3.new(1e6,1e6,1e6)
+
+		game:GetService("RunService").Heartbeat:Connect(function()
+			if pet and character:FindFirstChild("HumanoidRootPart") then
+				b.Position = character.HumanoidRootPart.Position + Vector3.new(3,0,3)
+			end
+		end)
+
+		message.Text = "🐾 A magical pet follows you!"
+	end)
+
+	-- 💨 Wind Boost
+	createButton("💨 Wind Speed Boost", function()
+		humanoid.WalkSpeed = 100
+		message.Text = "💨 You're SUPER FAST now!"
+		wait(5)
+		humanoid.WalkSpeed = 16
+	end)
+
+	-- 🔮 Magic Portal
+	createButton("🔮 Magic Portal", function()
+		local portal = Instance.new("Part")
+		portal.Size = Vector3.new(4,8,1)
+		portal.Position = character.HumanoidRootPart.Position + Vector3.new(0,0,5)
+		portal.Anchored = true
+		portal.BrickColor = BrickColor.new("Royal purple")
+		portal.Material = Enum.Material.Neon
+		portal.Parent = workspace
+		message.Text = "🔮 A portal has opened!"
+	end)
+
+	-- 🎠 Merry-Go-Round
+	createButton("🎠 Merry-Go-Round", function()
+		local spinBase = Instance.new("Part")
+		spinBase.Size = Vector3.new(10,1,10)
+		spinBase.Position = character.HumanoidRootPart.Position + Vector3.new(0,1,10)
+		spinBase.Anchored = true
+		spinBase.BrickColor = BrickColor.Yellow()
+		spinBase.Parent = workspace
+
+		local attachment = Instance.new("Attachment", spinBase)
+		local rotating = Instance.new("AngularVelocity", attachment)
+		rotating.AngularVelocity = Vector3.new(0, 2, 0)
+		rotating.MaxTorque = 100000
+
+		message.Text = "🎠 Round and round you go!"
+	end)
+
+	-- 🎆 Fireworks
+	createButton("🎆 Fireworks Show", function()
+		for i = 1, 5 do
+			local firework = Instance.new("Part")
+			firework.Size = Vector3.new(1,1,1)
+			firework.Position = character.HumanoidRootPart.Position + Vector3.new(math.random(-5,5), 10, math.random(-5,5))
+			firework.Anchored = false
+			firework.BrickColor = BrickColor.Random()
+			firework.Parent = workspace
+
+			local boom = Instance.new("Explosion")
+			boom.Position = firework.Position + Vector3.new(0,10,0)
+			boom.BlastRadius = 5
+			boom.Parent = workspace
+
+			game:GetService("Debris"):AddItem(firework, 5)
+		end
+		message.Text = "🎆 Boom! Pop! Fireworks!"
+	end)
+
+	-- ⛏️ Instant Obby
+	createButton("⛏️ Build Obby", function()
+		for i = 1, 10 do
+			local obbyPart = Instance.new("Part")
+			obbyPart.Size = Vector3.new(4,1,4)
+			obbyPart.Position = character.HumanoidRootPart.Position + Vector3.new(i*5, i, 0)
+			obbyPart.Anchored = true
+			obbyPart.BrickColor = BrickColor.Random()
+			obbyPart.Parent = workspace
+		end
+		message.Text = "⛏️ Obby built! Try to climb!"
+	end)
+end
+
+TriggerPart.Touched:Connect(onTouch)
