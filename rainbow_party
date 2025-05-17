@@ -1,0 +1,121 @@
+local TriggerPart = script.Parent
+
+local function onTouch(otherPart)
+	local character = otherPart.Parent
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	local player = game.Players:GetPlayerFromCharacter(character)
+	if not player then return end
+
+	if player:FindFirstChild("AdventureGui") then return end
+
+	local playerGui = player:WaitForChild("PlayerGui")
+
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "AdventureGui"
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = playerGui
+
+	-- Message at top
+	local messageLabel = Instance.new("TextLabel")
+	messageLabel.Size = UDim2.new(1, 0, 0, 60)
+	messageLabel.Position = UDim2.new(0, 0, 0, 0)
+	messageLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	messageLabel.TextColor3 = Color3.new(1, 1, 0)
+	messageLabel.Font = Enum.Font.Cartoon
+	messageLabel.TextSize = 36
+	messageLabel.Text = "🌟 Welcome to the Magic Adventure! 🌟"
+	messageLabel.Parent = screenGui
+
+	-- Helper function to create buttons
+	local function createButton(text, yPosition, callback)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 250, 0, 50)
+		btn.Position = UDim2.new(0, 20, 0, yPosition)
+		btn.BackgroundColor3 = Color3.fromRGB(math.random(100,255), math.random(100,255), math.random(100,255))
+		btn.TextColor3 = Color3.new(1,1,1)
+		btn.Font = Enum.Font.FredokaOne
+		btn.TextSize = 22
+		btn.Text = text
+		btn.Parent = screenGui
+		btn.MouseButton1Click:Connect(callback)
+	end
+
+	-- STEP 1
+	createButton("✨ Step 1: Sparkle Your Feet!", 80, function()
+		messageLabel.Text = "🦶 You got sparkly feet! Now press the next button!"
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Texture = "rbxassetid://483406049" -- sparkle
+		sparkle.Rate = 100
+		sparkle.Lifetime = NumberRange.new(1)
+		sparkle.Speed = NumberRange.new(0)
+		sparkle.Parent = character:FindFirstChild("HumanoidRootPart")
+
+		wait(1)
+	end)
+
+	-- STEP 2
+	createButton("🧱 Step 2: Build a Bridge!", 150, function()
+		messageLabel.Text = "🏗️ Great! Walk on your magic bridge!"
+		for i = 1, 10 do
+			local part = Instance.new("Part")
+			part.Size = Vector3.new(4,1,4)
+			part.Position = character.HumanoidRootPart.Position + Vector3.new(i*5, -3, 0)
+			part.Anchored = true
+			part.BrickColor = BrickColor.Random()
+			part.Parent = workspace
+		end
+	end)
+
+	-- STEP 3
+	createButton("🎨 Step 3: Color Swap!", 220, function()
+		messageLabel.Text = "🌈 Your body is now rainbow-fied!"
+		for _, part in pairs(character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part.Color = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
+			end
+		end
+	end)
+
+	-- STEP 4
+	createButton("🛡️ Step 4: Magic Shield", 290, function()
+		messageLabel.Text = "🛡️ You're protected with a glowing shield!"
+		local shield = Instance.new("Part")
+		shield.Shape = Enum.PartType.Ball
+		shield.Size = Vector3.new(10,10,10)
+		shield.Position = character.HumanoidRootPart.Position
+		shield.Transparency = 0.4
+		shield.Anchored = true
+		shield.BrickColor = BrickColor.new("Cyan")
+		shield.Material = Enum.Material.Neon
+		shield.Parent = workspace
+		game:GetService("Debris"):AddItem(shield, 5)
+	end)
+
+	-- STEP 5
+	createButton("💃 Step 5: Dance Party!", 360, function()
+		messageLabel.Text = "💃 Let's boogie! You're dancing now!"
+		local anim = Instance.new("Animation")
+		anim.AnimationId = "rbxassetid://507771019" -- Dance animation
+		local track = character:FindFirstChildOfClass("Humanoid"):LoadAnimation(anim)
+		track:Play()
+	end)
+
+	-- FINAL BUTTON
+	createButton("🎉 Final Step: Rainbow Confetti!", 430, function()
+		messageLabel.Text = "🎉 You're amazing! Watch the sky!"
+		for i = 1, 100 do
+			local confetti = Instance.new("Part")
+			confetti.Size = Vector3.new(0.5,0.5,0.5)
+			confetti.Position = character.HumanoidRootPart.Position + Vector3.new(math.random(-20,20), 20 + i, math.random(-20,20))
+			confetti.Anchored = false
+			confetti.BrickColor = BrickColor.Random()
+			confetti.Material = Enum.Material.Neon
+			confetti.Parent = workspace
+			game:GetService("Debris"):AddItem(confetti, 5)
+		end
+	end)
+end
+
+TriggerPart.Touched:Connect(onTouch)
