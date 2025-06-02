@@ -1,0 +1,51 @@
+-- Insert this into a Part (use a Script, not a LocalScript)
+
+local part = script.Parent
+
+-- Add effects
+local sparkle = Instance.new("Sparkles")
+sparkle.Color = Color3.fromRGB(0, 255, 255)
+sparkle.Enabled = false
+sparkle.Parent = part
+
+-- Add sound
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://9118823107"  -- cute child voice "Wooow!"
+sound.Volume = 1
+sound.Parent = part
+
+-- Make part glow
+part.Material = Enum.Material.Neon
+part.BrickColor = BrickColor.new("Electric blue")
+
+-- On touch function
+local touched = false
+
+part.Touched:Connect(function(hit)
+	if touched then return end
+	touched = true
+
+	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+	if player then
+		sparkle.Enabled = true
+		sound:Play()
+
+		local message = Instance.new("BillboardGui", part)
+		message.Size = UDim2.new(0, 200, 0, 50)
+		message.StudsOffset = Vector3.new(0, 3, 0)
+		message.AlwaysOnTop = true
+
+		local label = Instance.new("TextLabel", message)
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.Text = "Wooow! 🌟"
+		label.TextColor3 = Color3.new(1, 1, 0)
+		label.TextScaled = true
+		label.Font = Enum.Font.FredokaOne
+
+		wait(3)
+		message:Destroy()
+		sparkle.Enabled = false
+		touched = false
+	end
+end)
