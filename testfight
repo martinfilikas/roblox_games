@@ -1,51 +1,94 @@
--- Insert this into a Part (use a Script, not a LocalScript)
-
 local part = script.Parent
 
--- Add effects
-local sparkle = Instance.new("Sparkles")
-sparkle.Color = Color3.fromRGB(0, 255, 255)
-sparkle.Enabled = false
-sparkle.Parent = part
+-- RemoteEvent to communicate with the player
+local remote = Instance.new("RemoteEvent", part)
+remote.Name = "LowKickRemote"
 
--- Add sound
-local sound = Instance.new("Sound")
-sound.SoundId = "rbxassetid://9118823107"  -- cute child voice "Wooow!"
-sound.Volume = 1
-sound.Parent = part
+-- Animation ID (replace with your own if desired)
+local ANIMATION_ID = "rbxassetid://507777826" -- Sample kick animation
 
--- Make part glow
-part.Material = Enum.Material.Neon
-part.BrickColor = BrickColor.new("Electric blue")
-
--- On touch function
-local touched = false
-
+-- Touch handler – gives button to the player
 part.Touched:Connect(function(hit)
-	if touched then return end
-	touched = true
-
 	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
-	if player then
-		sparkle.Enabled = true
-		sound:Play()
+	if not player then return end
 
-		local message = Instance.new("BillboardGui", part)
-		message.Size = UDim2.new(0, 200, 0, 50)
-		message.StudsOffset = Vector3.new(0, 3, 0)
-		message.AlwaysOnTop = true
+	if not player.PlayerGui:FindFirstChild("KickGui") then
+		remote:FireClient(player)
+	end
+end)
 
-		local label = Instance.new("TextLabel", message)
-		label.Size = UDim2.new(1, 0, 1, 0)
-		label.BackgroundTransparency = 1
-		label.Text = "Wooow! 🌟"
-		label.TextColor3 = Color3.new(1, 1, 0)
-		label.TextScaled = true
-		label.Font = Enum.Font.FredokaOne
+-- Server-side kick logic
+remote.OnServerEvent:Connect(function(player)
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-		wait(3)
-		message:Destroy()
-		sparkle.Enabled = false
-		touched = false
+	-- Kick visual effect
+	local kickEffect = Instance.new("ParticleEmitter")
+	kickEffect.Texture = "rbxassetid://4834067"
+	kickEffect.Lifetime = NumberRange.new(0.2)
+	kickEffect.Speed = NumberRange.new(20)
+	kickEffect.Rate = 500
+	kickEffect.Parent = char.HumanoidRootPart
+	kickEffect:Emit(20)
+	game.Debris:AddItem(kickEffect, 0.5)
+
+	-- Kick sound
+	local sound = Instance.new("Sound", char.HumanoidRootPart)
+	sound.SoundId = "rbxassetid://9118823107" -- You can replace this with a kick sound
+	sound:Play()
+	game.Debris:AddItem(sound, 2)
+
+	-- Damage & knockback nearby players
+	for _, other in pairs(game.Players:GetPlayers()) do
+		if other ~= player and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
+			local distance = (char.HumanoidRootPart.Position - other.Character.HumanoidRootPart.Position).Magnitude
+			if distance < 8 then
+				local hrp = other.Character.HumanoidRootPart
+				hrp.Velocity = (hrp.Position - char.HumanoidRootPart.Position).Unit * 50 + Vector3.new(0,10,0)
+				local hum = other.Character:FindFirstChild("Humanoid")
+				if hum then hum:TakeDamage(10) end
+			end
+		end
+	end
+end)
+
+-- Listen for new players to insert GUI & LocalScript
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		remote:FireClient(player)
+	end)
+end)
+
+-- Client-side GUI and kick logic
+remote.OnClientEvent:Connect(function()
+	local player = game.Players.LocalPlayer
+	if not player.PlayerGui:FindFirstChild("KickGui") then
+		local gui = Instance.new("ScreenGui", player.PlayerGui)
+		gui.Name = "KickGui"
+
+		local button = Instance.new("TextButton", gui)
+		button.Size = UDim2.new(0, 150, 0, 50)
+		button.Position = UDim2.new(0.5, -75, 0.9, 0)
+		button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		button.Text = "Low Kick 👟"
+		button.TextScaled = true
+		button.Font = Enum.Font.FredokaOne
+
+		-- LocalScript functionality
+		button.MouseButton1Click:Connect(function()
+			local char = player.Character
+			if not char then return end
+
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				local anim = Instance.new("Animation")
+				anim.AnimationId = ANIMATION_ID
+				local track = humanoid:LoadAnimation(anim)
+				track:Play()
+			end
+
+			-- Tell server to damage nearby players
+			part.LowKickRemote:FireServer()
+		end)
 	end
 end)
