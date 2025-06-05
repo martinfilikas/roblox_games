@@ -1,0 +1,64 @@
+local part = script.Parent
+local Players = game:GetService("Players")
+local ServerStorage = game:GetService("ServerStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
+
+local killersFolder = ServerStorage:WaitForChild("KillersFolder")
+local screamSound = ReplicatedStorage:WaitForChild("ScreamSound")
+
+local activated = false
+
+part.Touched:Connect(function(hit)
+	if activated then return end
+	local character = hit.Parent
+	local player = Players:GetPlayerFromCharacter(character)
+	if player and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart") then
+		activated = true
+		print("Trigger activated by: " .. player.Name)
+
+		-- Flash effect and scream
+		local flash = Instance.new("ColorCorrectionEffect")
+		flash.TintColor = Color3.new(1, 0, 0)
+		flash.Brightness = 0.5
+		flash.Contrast = 1
+		flash.Saturation = -1
+		flash.Name = "ScareFlash"
+		flash.Parent = game.Lighting
+		Debris:AddItem(flash, 2)
+
+		local soundClone = screamSound:Clone()
+		soundClone.Parent = character:FindFirstChild("HumanoidRootPart")
+		soundClone:Play()
+		Debris:AddItem(soundClone, 5)
+
+		wait(5)
+
+		for i = 1, 5 do
+			local killerTemplate = killersFolder:FindFirstChild("Killer" .. i)
+			if killerTemplate then
+				local clone = killerTemplate:Clone()
+				clone.Parent = workspace
+				local spawnPosition = character.HumanoidRootPart.Position + Vector3.new(math.random(-50, 50), 0, math.random(-50, 50))
+				clone:SetPrimaryPartCFrame(CFrame.new(spawnPosition))
+
+				local humanoid = clone:FindFirstChildOfClass("Humanoid")
+				local hrp = clone:FindFirstChild("HumanoidRootPart")
+
+				if humanoid and hrp then
+					-- Move towards player every 0.5s
+					coroutine.wrap(function()
+						while clone and clone.Parent and humanoid.Health > 0 and character.Parent do
+							local targetPos = character:FindFirstChild("HumanoidRootPart") and character.HumanoidRootPart.Position or nil
+							if targetPos then
+								hrp.CFrame = CFrame.new(hrp.Position, targetPos)
+								humanoid:MoveTo(targetPos)
+							end
+							wait(0.5)
+						end
+					end)()
+				end
+			end
+		end
+	end
+end)
