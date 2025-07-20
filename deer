@@ -1,0 +1,81 @@
+local DEER_NAME = "Deer"
+local SHOOT_INTERVAL = 4
+local PROJECTILE_SPEED = 120
+local PROJECTILE_DAMAGE = 50
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local deer = workspace:WaitForChild(DEER_NAME)
+local root = deer:WaitForChild("HumanoidRootPart")
+
+local aura1 = Instance.new("ParticleEmitter", root)
+aura1.Texture = "rbxasset://textures/particles/smoke_main.dds"
+aura1.Color = ColorSequence.new(Color3.new(0,1,0), Color3.new(0,0.5,0))
+aura1.Rate = 40
+aura1.Lifetime = NumberRange.new(1,2)
+aura1.Speed = NumberRange.new(0,0)
+aura1.Size = NumberSequence.new(4,7)
+aura1.LightEmission = 0.5
+
+local aura2 = Instance.new("ParticleEmitter", root)
+aura2.Texture = "rbxasset://textures/particles/fire_main.dds"
+aura2.Color = ColorSequence.new(Color3.new(1,0,0), Color3.new(1,1,0))
+aura2.Rate = 30
+aura2.Lifetime = NumberRange.new(0.5,1)
+aura2.Speed = NumberRange.new(1,3)
+aura2.Size = NumberSequence.new(2,5)
+aura2.Rotation = NumberRange.new(0,360)
+aura2.RotSpeed = NumberRange.new(-60,60)
+
+spawn(function()
+    while true do
+        for r = 40, 80, 10 do
+            aura1.Rate = r
+            wait(0.1)
+        end
+        for r = 80, 40, -10 do
+            aura1.Rate = r
+            wait(0.1)
+        end
+    end
+end)
+
+local function getNearestPlayer(pos)
+    local best, bd = nil, math.huge
+    for _, p in ipairs(Players:GetPlayers()) do
+        local c = p.Character
+        local hrp = c and c:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local d = (hrp.Position - pos).Magnitude
+            if d < bd then best, bd = hrp, d end
+        end
+    end
+    return best
+end
+
+spawn(function()
+    while true do
+        wait(SHOOT_INTERVAL)
+        local target = getNearestPlayer(root.Position)
+        if target then
+            local proj = Instance.new("Part")
+            proj.Size = Vector3.new(0.6,0.6,0.6)
+            proj.Shape = Enum.PartType.Ball
+            proj.CFrame = root.CFrame * CFrame.new(0,1,0)
+            proj.BrickColor = BrickColor.new("Bright red")
+            proj.CanCollide = false
+            proj.Parent = workspace
+            local bv = Instance.new("BodyVelocity", proj)
+            bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+            bv.Velocity = (target.Position - root.Position).Unit * PROJECTILE_SPEED
+            game:GetService("Debris"):AddItem(proj, 5)
+            proj.Touched:Connect(function(hit)
+                local h = hit.Parent:FindFirstChild("Humanoid")
+                if h and hit.Parent ~= deer then
+                    h:TakeDamage(PROJECTILE_DAMAGE)
+                    proj:Destroy()
+                end
+            end)
+        end
+    end
+end)
