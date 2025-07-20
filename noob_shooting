@@ -1,0 +1,134 @@
+local NOOB_NAME="Noob"
+local DANCE_ANIM_ID="rbxassetid://507766666"
+local CHASE_RANGE=30
+local SHOOT_INTERVAL=5
+local JUMP_INTERVAL=3
+local PROJECTILE_SPEED=100
+local OUTFIT_CHANGE_INTERVAL=3
+local Players=game:GetService("Players")
+local Pathfinding=game:GetService("PathfindingService")
+local RunService=game:GetService("RunService")
+local ChatService=game:GetService("Chat")
+local RepStorage=game:GetService("ReplicatedStorage")
+local noob=workspace:WaitForChild(NOOB_NAME)
+local humanoid=noob:WaitForChild("Humanoid")
+local rootPart=noob:WaitForChild("HumanoidRootPart")
+local head=noob:FindFirstChild("Head")
+local danceAnim=Instance.new("Animation")
+danceAnim.AnimationId=DANCE_ANIM_ID
+local danceTrack=humanoid:LoadAnimation(danceAnim)
+local shirtIDs={"12345678","87654321","11223344"}
+local pantsIDs={"22334455","99887766","55443322"}
+local faceIDs={"rbxassetid://15820872","rbxassetid://18058534","rbxassetid://98349342"}
+local emojis={"😂","😎","🤩","😜","💥"}
+
+local bc=noob:FindFirstChild("Body Colors") or Instance.new("BodyColors",noob)
+bc.HeadColor=BrickColor.new("Hot pink")
+bc.TorsoColor=BrickColor.new("Bright violet")
+bc.LeftArmColor=BrickColor.new("Bright yellow")
+bc.RightArmColor=BrickColor.new("Bright yellow")
+bc.LeftLegColor=BrickColor.new("Lime green")
+bc.RightLegColor=BrickColor.new("Lime green")
+
+local emitter=Instance.new("ParticleEmitter",rootPart)
+emitter.Texture="rbxasset://textures/particles/smoke_main.dds"
+emitter.Color=ColorSequence.new(Color3.new(1,0,1),Color3.new(0,1,1))
+emitter.LightEmission=0.8
+emitter.Rate=30
+emitter.Lifetime=NumberRange.new(1,1.5)
+emitter.Speed=NumberRange.new(0,0)
+emitter.Size=NumberSequence.new(5,8)
+
+spawn(function()
+    while true do
+        for r=30,80,10 do emitter.Rate=r wait(0.15) end
+        for r=80,30,-10 do emitter.Rate=r wait(0.15) end
+    end
+end)
+
+spawn(function()
+    local gun=RepStorage:WaitForChild("Gun"):Clone()
+    gun.Parent=noob
+    humanoid:EquipTool(gun)
+end)
+
+local function getNearestPlayer(pos)
+    local best,dist=nil,math.huge
+    for _,pl in ipairs(Players:GetPlayers()) do
+        local chr=pl.Character
+        local hrp=chr and chr:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local d=(hrp.Position-pos).Magnitude
+            if d<dist then best,dist=hrp,d end
+        end
+    end
+    return best,dist
+end
+
+spawn(function()
+    while true do
+        wait(JUMP_INTERVAL)
+        humanoid.Jump=true
+    end
+end)
+
+spawn(function()
+    while true do
+        wait(SHOOT_INTERVAL)
+        local target,dist=getNearestPlayer(rootPart.Position)
+        if target and dist<=100 then
+            local proj=Instance.new("Part")
+            proj.Size=Vector3.new(0.5,0.5,0.5)
+            proj.CFrame=rootPart.CFrame*CFrame.new(0,1,0)
+            proj.BrickColor=BrickColor.new("Really red")
+            proj.Shape=Enum.PartType.Ball
+            proj.CanCollide=false
+            proj.Parent=workspace
+            local bodyVel=Instance.new("BodyVelocity",proj)
+            bodyVel.MaxForce=Vector3.new(1e5,1e5,1e5)
+            bodyVel.Velocity=(target.Position-rootPart.Position).Unit*PROJECTILE_SPEED
+            game.Debris:AddItem(proj,5)
+            proj.Touched:Connect(function(hit)
+                local h=hit.Parent:FindFirstChild("Humanoid")
+                if h and hit.Parent~=noob then
+                    h:TakeDamage(10)
+                    proj:Destroy()
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    danceTrack:Play()
+    while true do
+        local target,dist=getNearestPlayer(rootPart.Position)
+        if target and dist<CHASE_RANGE then
+            if danceTrack.IsPlaying then danceTrack:Stop() end
+            local path=Pathfinding:CreatePath()
+            path:ComputeAsync(rootPart.Position,target.Position)
+            for _,wp in ipairs(path:GetWaypoints()) do
+                humanoid:MoveTo(wp.Position)
+                humanoid.MoveToFinished:Wait(1)
+            end
+            wait(0.5)
+            danceTrack:Play()
+        end
+        wait(0.5)
+    end
+end)
+
+spawn(function()
+    while true do
+        wait(OUTFIT_CHANGE_INTERVAL)
+        local desc=Instance.new("HumanoidDescription")
+        desc.Shirt="rbxassetid://"..shirtIDs[math.random(#shirtIDs)]
+        desc.Pants="rbxassetid://"..pantsIDs[math.random(#pantsIDs)]
+        humanoid:ApplyDescription(desc)
+        if head then
+            local face=head:FindFirstChild("face")
+            if face then face.Texture=faceIDs[math.random(#faceIDs)] end
+            ChatService:Chat(head,emojis[math.random(#emojis)],Enum.ChatColor.Blue)
+        end
+    end
+end)
