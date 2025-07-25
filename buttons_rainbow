@@ -1,0 +1,133 @@
+-- Place this Script inside a Part in Workspace, and add a ClickDetector to that Part.
+-- When a player clicks the Part, dramatic weather, explosion, and aura effects will play.
+
+local part = script.Parent
+local clickDetector = part:FindFirstChildOfClass("ClickDetector") or Instance.new("ClickDetector", part)
+
+-- Services
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
+
+-- Configuration
+local RAIN_DURATION = 10         -- seconds of rain
+local FOG_TARGET_END = 100       -- Fog end distance
+local FOG_TARGET_START = 0       -- Fog start distance
+local BOMB_DROP_HEIGHT = 50      -- studs above the part
+local AURA_DURATION = 5          -- seconds of aura on humanoid
+
+-- Preload sounds/particles (optional: put assets in ReplicatedStorage)
+-- Example: local rainSound = ReplicatedStorage:WaitForChild("RainSound")
+-- Example: local bombMesh = ReplicatedStorage:WaitForChild("BombMesh")
+
+local function applyRainAndFog()
+	-- Play rain sound
+	local rainSound = Instance.new("Sound", part)
+	rainSound.SoundId = "rbxassetid://131149141"   -- Rain loop sound
+	rainSound.Looped = true
+	rainSound:Play()
+
+	-- ParticleEmitter for rain
+	local rainEmitter = Instance.new("ParticleEmitter")
+	rainEmitter.Texture = "rbxassetid://241594314"  -- raindrop texture
+	rainEmitter.Rate = 200
+	rainEmitter.Lifetime = NumberRange.new(1, 1.5)
+	rainEmitter.Speed = NumberRange.new(50)
+	rainEmitter.Size = NumberSequence.new(0.2)
+	rainEmitter.VelocitySpread = 20
+	rainEmitter.Parent = part
+
+	-- Tween fog in
+	local startFogEnd = Lighting.FogEnd
+	local tweenInfo = TweenInfo.new(2)
+	local tweenFog = game:GetService("TweenService"):Create(Lighting, tweenInfo, {FogEnd = FOG_TARGET_END, FogStart = FOG_TARGET_START})
+	tweenFog:Play()
+
+	delay(RAIN_DURATION, function()
+		-- Cleanup rain
+		rainEmitter.Enabled = false
+		rainSound:Stop()
+		TweenService:Create(Lighting, tweenInfo, {FogEnd = startFogEnd, FogStart = 0}):Play()
+	end)
+end
+
+local function dropBomb()
+	-- Create bomb part
+	local bomb = Instance.new("Part")
+	bomb.Shape = Enum.PartType.Ball
+	bomb.Color = Color3.new(0.1, 0.1, 0.1)
+	bomb.Material = Enum.Material.Metal
+	bomb.Size = Vector3.new(2, 2, 2)
+	bomb.Anchored = false
+	bomb.Position = part.Position + Vector3.new(0, BOMB_DROP_HEIGHT, 0)
+	bomb.Parent = workspace
+
+	-- Add mesh for spikiness (optional)
+	local mesh = Instance.new("SpecialMesh", bomb)
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Scale = Vector3.new(1.5,1.5,1.5)
+
+	-- Drop and explode on touch
+	bomb.Touched:Connect(function(hit)
+		-- Prevent multiple explosions
+		if not bomb or not bomb.Parent then return end
+		local explosion = Instance.new("Explosion")
+		explosion.Position = bomb.Position
+		explosion.BlastRadius = 10
+		explosion.BlastPressure = 500000
+		explosion.Parent = workspace
+		bomb:Destroy()
+	end)
+
+	-- Cleanup if not touched
+	Debris:AddItem(bomb, 15)
+end
+
+local function applyAuraTo(character)
+	if not character then return end
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not hrp or not humanoid then return end
+
+	-- Create aura
+	local aura = Instance.new("ParticleEmitter")
+	aura.Texture = "rbxassetid://248625108"   -- glow texture
+	aura.Rate = 100
+	aura.Lifetime = NumberRange.new(1)
+	aura.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 0)})
+	aura.Speed = NumberRange.new(0)
+	aura.Rotation = NumberRange.new(0, 360)
+	aura.Parent = hrp
+
+	-- Remove aura after duration
+	delay(AURA_DURATION, function()
+		aura.Enabled = false
+		Debris:AddItem(aura, 2)
+	end)
+end
+
+-- Main trigger
+clickDetector.MouseClick:Connect(function(player)
+	local char = player.Character
+	if not char then return end
+
+	-- Child reaction
+	local head = char:FindFirstChild("Head")
+	if head then
+		local msg = Instance.new("BillboardGui", head)
+		msg.Size = UDim2.new(0,200,0,50)
+		msg.Adornee = head
+		local txt = Instance.new("TextLabel", msg)
+		txt.Size = UDim2.new(1,0,1,0)
+		txt.BackgroundTransparency = 1
+		txt.Text = "Woow, that's cool!"
+		txt.TextScaled = true
+		txt.TextColor3 = Color3.new(1,1,1)
+		Debris:AddItem(msg, 3)
+	end
+
+	-- Fire effects
+	applyRainAndFog()
+	dropBomb()
+	applyAuraTo(char)
+end)
