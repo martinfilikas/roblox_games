@@ -1,0 +1,239 @@
+// Noob model script
+-- =================== SERVER SCRIPT ===================
+-- Place this Script directly under the Noob NPC model in Workspace
+-- It handles clicks and relays a RemoteEvent to clients, and executes many effect options
+
+local npc       = script.Parent
+local bodyCols  = npc:FindFirstChildOfClass("BodyColors")
+local humanoid  = npc:FindFirstChild("Humanoid")
+local hrp       = npc:FindFirstChild("HumanoidRootPart")
+local Players   = game:GetService("Players")
+local RepStore  = game:GetService("ReplicatedStorage")
+local Lighting  = game:GetService("Lighting")
+local Debris    = game:GetService("Debris")
+
+-- Ensure ClickDetector
+local click = npc:FindFirstChildOfClass("ClickDetector")
+if not click then click = Instance.new("ClickDetector", npc) end
+
+-- Create or retrieve RemoteEvent folder
+local eventsFolder = RepStore:FindFirstChild("NPCEvents")
+if not eventsFolder then eventsFolder = Instance.new("Folder", RepStore); eventsFolder.Name = "NPCEvents" end
+local chooseEvent = eventsFolder:FindFirstChild("ChooseOutfit")
+if not chooseEvent then chooseEvent = Instance.new("RemoteEvent", eventsFolder); chooseEvent.Name = "ChooseOutfit" end
+
+-- Various effect functions
+local function applyAura()
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = "rbxassetid://248625108"
+	emitter.Rate = 200; emitter.Lifetime = NumberRange.new(1)
+	emitter.Size = NumberSequence.new{NumberSequenceKeypoint.new(0,4), NumberSequenceKeypoint.new(1,0)}
+	emitter.Parent = hrp
+	Debris:AddItem(emitter, 3)
+end
+
+local function applyRainFog()
+	local rainSound = Instance.new("Sound", hrp)
+	rainSound.SoundId = "rbxassetid://131149141"; rainSound.Looped = true; rainSound:Play()
+	local origFog = Lighting.FogEnd; Lighting.FogEnd = 200
+	Debris:AddItem(rainSound, 10)
+	delay(10, function() Lighting.FogEnd = origFog end)
+end
+
+local function laugh()
+	local s = Instance.new("Sound", hrp)
+	s.SoundId = "rbxassetid://2801263"; s:Play()
+	Debris:AddItem(s, 3)
+end
+
+local function ghostify()
+	-- become ghost: transparency + no collision
+	for _, part in ipairs(npc:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Transparency = 0.5
+			part.CanCollide = false
+		end
+	end
+	delay(8, function()
+		for _, part in ipairs(npc:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = 0
+				part.CanCollide = true
+			end
+		end
+	end)
+end
+
+local function explosion()
+	local exp = Instance.new("Explosion")
+	exp.Position = hrp.Position; exp.BlastRadius = 10; exp.BlastPressure = 500000
+	exp.Parent = workspace
+end
+
+local function lightning()
+	local loc = hrp.Position + Vector3.new(0,20,0)
+	local part = Instance.new("Part", workspace)
+	part.Anchored=true; part.Transparency=1; part.CanCollide=false
+	part.Position = loc
+	local light = Instance.new("PointLight", part)
+	light.Brightness=10; light.Range=15
+	Debris:AddItem(part,0.2)
+end
+
+local function fireTrail()
+	local trail = Instance.new("Trail", hrp)
+	trail.Attachment0 = Instance.new("Attachment", hrp)
+	trail.Attachment1 = Instance.new("Attachment", hrp)
+	Debris:AddItem(trail, 5)
+end
+
+local function teleportPlayer()
+	local plr = Players:GetPlayers()[math.random(#Players:GetPlayers())]
+	if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+		hrp.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(3,0,0)
+	end
+end
+
+local function buildPlatform()
+	local plat = Instance.new("Part", workspace)
+	plat.Size = Vector3.new(10,1,10); plat.Anchored=true
+	plat.Position = hrp.Position - Vector3.new(0,3,0)
+	Debris:AddItem(plat, 10)
+end
+
+local function dance()
+	humanoid:LoadAnimation(Instance.new("Animation", humanoid)).AnimationId = "rbxassetid://507766666"; humanoid:Play() -- placeholder
+end
+
+local function shrink()
+	npc:SetPrimaryPartCFrame(hrp.CFrame)
+	npc.PrimaryPart = hrp
+	npc:SetPrimaryPartCFrame(hrp.CFrame)
+	for _, part in ipairs(npc:GetDescendants()) do if part:IsA("BasePart") then part.Size=part.Size*0.5 end end
+	delay(5, function() for _, part in ipairs(npc:GetDescendants()) do if part:IsA("BasePart") then part.Size=part.Size*2 end end end)
+end
+
+local function grow()
+	for _, part in ipairs(npc:GetDescendants()) do if part:IsA("BasePart") then part.Size=part.Size*2 end end
+	delay(5, function() for _, part in ipairs(npc:GetDescendants()) do if part:IsA("BasePart") then part.Size=part.Size*0.5 end end end)
+end
+
+local function freezePlayer()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+			plr.Character.Humanoid.WalkSpeed = 0
+			delay(5, function() plr.Character.Humanoid.WalkSpeed = 16 end)
+		end
+	end
+end
+
+local function killPlayer()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+			plr.Character.Humanoid.Health = 0
+		end
+	end
+end
+
+local function summonMinions()
+	for i=1,3 do
+		local clone = npc:Clone(); clone.Parent=workspace
+		clone:SetPrimaryPartCFrame(hrp.CFrame*CFrame.new(math.random(-5,5),0,math.random(-5,5)))
+	end
+end
+
+-- On click, fire event to that player
+click.MouseClick:Connect(function(player)
+	chooseEvent:FireClient(player)
+end)
+
+-- Handle client choice
+chooseEvent.OnServerEvent:Connect(function(player, outfit, hairId, effect)
+	-- Outfit presets
+	if outfit and bodyCols then
+		local presets = {
+			Bright={Head="Bright yellow",Torso="Bright blue",Limbs="Bright green"},
+			Dark={Head="Dark stone grey",Torso="Black",Limbs="Really red"},
+			Neon={Head="Institutional white",Torso="Toothpaste",Limbs="Toothpaste"}
+		}
+		local p = presets[outfit]
+		if p then
+			bodyCols.HeadColor=BrickColor.new(p.Head)
+			bodyCols.TorsoColor=BrickColor.new(p.Torso)
+			bodyCols.LeftArmColor=BrickColor.new(p.Limbs)
+			bodyCols.RightArmColor=BrickColor.new(p.Limbs)
+			bodyCols.LeftLegColor=BrickColor.new(p.Limbs)
+			bodyCols.RightLegColor=BrickColor.new(p.Limbs)
+		end
+	end
+	-- Hair
+	if hairId then
+		for _,c in ipairs(npc:GetChildren())do if c:IsA("Accessory")then c:Destroy()end end
+		local acc=Instance.new("Accessory")acc.Name="Hair"
+		local handle=Instance.new("Part",acc)handle.Name="Handle"handle.Size=Vector3.new(1,1,1)
+		local mesh=Instance.new("SpecialMesh",handle)mesh.MeshId="rbxassetid://"..tostring(hairId)mesh.TextureId=mesh.MeshId
+		acc.Parent=npc
+	end
+	-- Effects dispatch
+	if effect then
+		local map={Aura=applyAura,Rain=applyRainFog,Laugh=laugh,Ghost=ghostify,Explosion=explosion,Lightning=lightning,
+			FireTrail=fireTrail,Teleport=teleportPlayer,Build=buildPlatform,Dance=dance,Shrink=shrink,
+			Grow=grow,Freeze=freezePlayer,Kill=killPlayer,Minions=summonMinions}
+		local fn=map[effect]
+		if fn then fn() end
+	end
+end)
+
+
+
+
+
+// Localscript in Starterplayer-> StarterPlayerScripts -> LocalScript
+-- =================== CLIENT LOCAL SCRIPT ===================
+-- Place this LocalScript under StarterPlayerScripts
+-- Builds a GUI with 15+ options
+
+local Players     = game:GetService("Players")
+local RepStore    = game:GetService("ReplicatedStorage")
+local chooseEvent = RepStore:WaitForChild("NPCEvents"):WaitForChild("ChooseOutfit")
+local playerGui   = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "NPCOutfitGUI"
+local frame = Instance.new("Frame", screenGui)
+frame.Size,frame.Position = UDim2.new(0,300,0,500),UDim2.new(0.5,-150,0.5,-250)
+frame.BackgroundColor3=Color3.fromRGB(25,25,25); frame.BorderSizePixel=0; frame.Visible=false
+local title=Instance.new("TextLabel",frame)
+title.Text="Choose Options"; title.Size=UDim2.new(1,0,0,30); title.BackgroundTransparency=1; title.TextColor3=Color3.new(1,1,1); title.TextScaled=true
+
+-- Lists
+local outfits={"Bright","Dark","Neon"}
+local effects={"Aura","Rain","Laugh","Ghost","Explosion","Lightning","FireTrail","Teleport","Build","Dance","Shrink","Grow","Freeze","Kill","Minions"}
+
+local y=40
+-- Outfit buttons
+for _,o in ipairs(outfits) do
+	local btn=Instance.new("TextButton",frame)
+	btn.Size=UDim2.new(1,-20,0,25); btn.Position=UDim2.new(0,10,0,y); btn.Text=o.." Outfit"
+	btn.MouseButton1Click:Connect(function() chooseEvent:FireServer(o,nil,nil); frame.Visible=false end)
+	y=y+30
+end
+
+-- Hair input
+local hairBox=Instance.new("TextBox",frame)
+hairBox.PlaceholderText="Hair Asset ID"; hairBox.Size=UDim2.new(1,-20,0,30); hairBox.Position=UDim2.new(0,10,0,y)
+y=y+35
+local hairBtn=Instance.new("TextButton",frame)
+hairBtn.Text="Apply Hair"; hairBtn.Size=UDim2.new(1,-20,0,25); hairBtn.Position=UDim2.new(0,10,0,y)
+hairBtn.MouseButton1Click:Connect(function() local id=tonumber(hairBox.Text); if id then chooseEvent:FireServer(nil,id,nil); frame.Visible=false end end)
+y=y+35
+
+-- Effect buttons
+for _,e in ipairs(effects) do
+	local btn=Instance.new("TextButton",frame)
+	btn.Size=UDim2.new(1,-20,0,25); btn.Position=UDim2.new(0,10,0,y); btn.Text=e
+	btn.MouseButton1Click:Connect(function() chooseEvent:FireServer(nil,nil,e); frame.Visible=false end)
+	y=y+30
+end
+
+chooseEvent.OnClientEvent:Connect(function() frame.Visible=true end)
