@@ -1,0 +1,70 @@
+local TweenService = game:GetService("TweenService")
+
+-- Get the part
+local part = workspace:WaitForChild("Part")
+
+-- Neon glow
+part.Material = Enum.Material.Neon
+
+-- Outline glow
+local hl = Instance.new("Highlight")
+hl.FillTransparency = 1
+hl.OutlineTransparency = 0.25
+hl.Parent = part
+
+-- Light
+local light = Instance.new("PointLight")
+light.Brightness = 2
+light.Range = 15
+light.Shadows = true
+light.Parent = part
+
+-- Fire effect
+local fire = Instance.new("Fire")
+fire.Size = 10
+fire.Heat = 20
+fire.Parent = part
+
+-- Particle aura
+local att = Instance.new("Attachment")
+att.Parent = part
+
+local pe = Instance.new("ParticleEmitter")
+pe.Rate = 50
+pe.Speed = NumberRange.new(1,3)
+pe.Lifetime = NumberRange.new(0.5, 1.2)
+pe.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(1,0)})
+pe.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(1,1)})
+pe.Texture = "rbxassetid://243660364" -- flame texture
+pe.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))
+pe.Parent = att
+
+-- Color palette to cycle
+local colors = {
+    Color3.fromRGB(255,0,0),   -- red
+    Color3.fromRGB(255,128,0), -- orange
+    Color3.fromRGB(255,255,0), -- yellow
+    Color3.fromRGB(0,255,0),   -- green
+    Color3.fromRGB(0,128,255), -- blue
+    Color3.fromRGB(180,0,255)  -- purple
+}
+
+-- Tween settings
+local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+
+-- Loop to cycle colors and flash brightness
+while true do
+    for _, c in ipairs(colors) do
+        -- Tween Part + Light + Fire + Particle colors
+        TweenService:Create(part, tweenInfo, {Color = c}):Play()
+        TweenService:Create(light, tweenInfo, {Color = c, Brightness = math.random(2,8)}):Play()
+        TweenService:Create(fire, tweenInfo, {Color = c}):Play()
+        pe.Color = ColorSequence.new(c)
+
+        -- Flash effect (quick size spike)
+        fire.Size = 10
+        fire.Size = fire.Size + math.random(5,10)
+
+        task.wait(2) -- wait same as tween duration
+    end
+end
